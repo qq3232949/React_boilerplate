@@ -3,15 +3,22 @@ const path = require('path');
 
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
+const isomorphicPath = path.resolve(__dirname, 'src/common/isomorphic.js');
+
 const NODE_MODULES = path.resolve(__dirname, 'node_modules');
 const reactPath = path.resolve(NODE_MODULES, 'react/dist/react.min.js');
 const reactLibPath = path.resolve(NODE_MODULES, 'react/lib');
 const reactRouterPath = path.resolve(NODE_MODULES, 'react-router/umd/ReactRouter.min.js');
 
 const config = {
-  entry: [
-    './src/index.js',
-  ],
+  // entry: [
+  //   'babel-polyfill',
+  //   './src/index.js',
+  // ],
+  entry: {
+    vendors: ['react', 'babel-polyfill'],
+    app: path.resolve(__dirname, 'src/index.js'),
+  },
   module: {
     loaders: [
       {
@@ -20,6 +27,10 @@ const config = {
 
         // loader: 'react-hot!babel'
         loader: 'react-hot!babel',
+      },
+      {
+        test: /\.css/,
+        loader: 'style!css'
       },
       {
         test: /\.scss$/,
@@ -32,6 +43,10 @@ const config = {
         test: /\.(png|jpg)$/,
         loader: 'url-loader?limit=100000000',
       },
+      {
+        test: /\.svg$/,
+        loader: 'babel!react-svg'
+      },
     ],
     noParse: [reactPath],
   },
@@ -41,15 +56,18 @@ const config = {
       'react/lib': reactLibPath,
       react: reactPath,
       'react-router': reactRouterPath,
+      'isomorphic': isomorphicPath,
     },
 
   },
   output: {
     path: './dist/',
-    filename: 'bundle.js',
+    filename: '[name].[chunkhash].js',
+    chunkFilename: '[chunkhash].js',
   },
   plugins: [
-    new ExtractTextPlugin('dist/stylesheets/[name].css', {
+    new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js',Infinity),
+    new ExtractTextPlugin('stylesheets/[name].css', {
       allChunks: true,
     }),
     new webpack.DefinePlugin({
